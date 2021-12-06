@@ -1,0 +1,62 @@
+import xlwings as xw
+import pandas as pd
+import easygui
+import sys
+import os
+
+# open file select sheet, handle possibles errors
+try: 
+    app = xw.App(visible=False)
+    book = xw.Book('Dashboard.xlsx')
+    sheet = book.sheets[0]
+except FileNotFoundError:
+    easygui.msgbox("Missing file, incorrect name or incorrect format correct: \nDashboard.xlsx", ok_button='Okejka')
+    sys.exit()
+
+
+# open file from link provided in a cell in a file, setup variables for filtering, handle possibles errors
+try:
+    deftest = pd.read_csv(sheet.range('B3').value)
+    test2 = {'country', 'city', 'city_ascii', 'population'}
+    test3 = set(deftest[10:1])
+    df = pd.read_csv(sheet.range('B3').value, usecols=['country', 'city', 'city_ascii', 'population'])
+except ValueError:
+    easygui.msgbox("Missing headres in worldcities file: "+(str(test2-test3)), ok_button='Okejka')
+    sys.exit()
+except FileNotFoundError:
+    easygui.msgbox("Missing file for input path:"+str(sheet.range('B3').value), ok_button='Okejka')
+    sys.exit()
+country = sheet.range('B4').value
+population = sheet.range('B5').value
+
+
+# handle possibles errors for variables
+try:
+    test1 = float(population)
+except ValueError:
+    easygui.msgbox("Population must be number", ok_button='Okejka')
+    sys.exit()
+try:
+    test2 = str(country)
+except ValueError:
+    easygui.msgbox("Country must be letters", ok_button='Okejka')
+    sys.exit()
+
+# filter data using variables
+filtered_data = df.loc[(df['country'] == country) & (df['population'] <= population)]
+
+# save a file in specific folder, close a file is open, question to overwrite, handle errors
+if os.path.exists('C:\\Users\\Pawel\\PycharmProjects\\CwiczeniaPraktyczne\\venv\\filtered_data.csv') is True:
+    if easygui.ynbox("The file exists, do you want to continue?", choices=["Yes", "No"]):
+        abc = True
+        while abc:
+            try:
+                filtered_data.to_csv('C:\\Users\\Pawel\\PycharmProjects\\CwiczeniaPraktyczne\\venv\\filtered_data.csv',
+                                     index=False)
+                abc = False
+            except():
+                xw.Book('C:\\Users\\Pawel\\PycharmProjects\\CwiczeniaPraktyczne\\venv\\filtered_data.csv').close()
+                break
+    else:
+        easygui.msgbox("Shut down script", ok_button='Okejka')
+        sys.exit()
